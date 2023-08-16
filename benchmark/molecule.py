@@ -6,6 +6,7 @@ from openfermion.chem import MolecularData, geometry_from_pubchem
 from openfermion.transforms import get_fermion_operator, bravyi_kitaev, jordan_wigner
 from openfermionpyscf import run_pyscf
 import tequila as tq
+from tequila.quantumchemistry.encodings import known_encodings
 
 
 def parse(operator: FermionOperator, nqubit):
@@ -92,7 +93,12 @@ class DiatomicMolecularHamiltonian(Hamiltonian):
             diatomic_bond_length = kwargs["diatomic_bond_length"]
             hamiltonian = self._get_molecule_hamiltonian(basis, atom1_type, atom2_type, diatomic_bond_length)
         else:
-            hamiltonian = molecule.make_hamiltonian()
+            if bravyi_kitaev:
+                transformation = molecule._initialize_transformation("BravyiKitaev")
+            else:
+                transformation = molecule._initialize_transformation("JordanWigner")
+            molecule.transformation = transformation
+            hamiltonian = [molecule.make_hamiltonian().qubit_operator]
         coeffs, paulis, identity_coeff = parse(hamiltonian, nqubit)
         self.identity_coeff = identity_coeff
         logging.log(logging.INFO, f"# of terms is {len(coeffs)}")
