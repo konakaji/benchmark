@@ -20,6 +20,7 @@ setuptools.setup(
     ],
     install_requires=[
         "qwrapper @ git+ssh://git@github.com/konakaji/qwrapper.git",
+        "tequila-basic==1.8.9",
         "openfermion>=1.5.1",
         "openfermionpyscf>=0.5",
         "pyscf==2.0.1"

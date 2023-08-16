@@ -5,6 +5,7 @@ from openfermion import FermionOperator
 from openfermion.chem import MolecularData, geometry_from_pubchem
 from openfermion.transforms import get_fermion_operator, bravyi_kitaev, jordan_wigner
 from openfermionpyscf import run_pyscf
+import tequila as tq
 
 
 def parse(operator: FermionOperator, nqubit):
@@ -14,7 +15,7 @@ def parse(operator: FermionOperator, nqubit):
     print("Starting to parse FermionOperator using " + str(nqubit) + " qubits...")
     print("")
     for t in operator:
-        print("Operator t: ",t)
+        print("Operator t: ", t)
         for term, coefficient in t.terms.items():
             print("Term, coeff: ", term, coefficient)
             dict = {}
@@ -39,6 +40,16 @@ def parse(operator: FermionOperator, nqubit):
             else:
                 identity_coeff += coefficient.real
     return coeffs, paulis, identity_coeff
+
+
+def generate_molecule(atom1type, atom2type, bond_length, basis_set, active_orbitals=None):
+    geometry = (f"{atom1type} 0.0 0.0 0.0\n" +
+                f"{atom2type} 0.0 0.0 {bond_length}")
+    if active_orbitals is not None:
+        return tq.chemistry.Molecule(geometry=geometry,
+                                     basis_set=basis_set,
+                                     active_orbitals=active_orbitals)
+    return tq.chemistry.Molecule(geometry=geometry, basis_set=basis_set)
 
 
 class MolecularHamiltonian(Hamiltonian):
@@ -68,18 +79,26 @@ class MolecularHamiltonian(Hamiltonian):
         logging.info("finish qubit mapping.")
         return result
 
+
 class DiatomicMolecularHamiltonian(Hamiltonian):
-    def __init__(self, nqubit, basis, atom1_type, atom2_type, diatomic_bond_length, bravyi_kitaev=True):
+    def __init__(self, nqubit, molecule: tq.quantumchemistry.Molecule = None, bravyi_kitaev=True, **kwargs):
         self.identity_coeff = 0
         self.bravyi_kitaev = bravyi_kitaev
-        hamiltonian = self._get_molecule_hamiltonian(basis, atom1_type, atom2_type, diatomic_bond_length)
+
+        if molecule is None:
+            basis = kwargs["basis"]
+            atom1_type = kwargs["atom1_type"]
+            atom2_type = kwargs["atom2_type"]
+            diatomic_bond_length = kwargs["diatomic_bond_length"]
+            hamiltonian = self._get_molecule_hamiltonian(basis, atom1_type, atom2_type, diatomic_bond_length)
+        else:
+            hamiltonian = molecule.make_hamiltonian()
         coeffs, paulis, identity_coeff = parse(hamiltonian, nqubit)
         self.identity_coeff = identity_coeff
         logging.log(logging.INFO, f"# of terms is {len(coeffs)}")
         super().__init__(coeffs, paulis, nqubit)
 
     def _get_molecule_hamiltonian(self, basis, atom1_type, atom2_type, diatomic_bond_length):
-        diatomic_bond_length = .7414  # in Angstrom
         geometry = [(atom1_type, (0., 0., 0.)), (atom2_type, (0., 0., diatomic_bond_length))]
         multiplicity = 1
         charge = 0

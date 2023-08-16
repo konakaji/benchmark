@@ -44,6 +44,7 @@ htmlcov/
 .cache
 nosetests.xml
 coverage.xml
+h2_sto-3g.hdf5
 *,cover
 .hypothesis/
 
