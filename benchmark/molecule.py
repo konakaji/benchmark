@@ -27,20 +27,20 @@ def parse(operator: FermionOperator, nqubit):
                 if index > nqubit - 1:
                     raise AttributeError("nqubit is not correct.")
             results = []
-            # is_identity = False
-            # if len(dict) == 0:
-            #     is_identity = True
+            is_identity = False
+            if len(dict) == 0:
+                is_identity = True
             for q_index in range(nqubit):
                 if q_index in dict:
                     results.append(dict[q_index])
                     continue
                 results.append("I")
-            # if not is_identity:
-            coeffs.append(coefficient.real)
-            p_string = "".join(results)
-            paulis.append(PauliObservable(p_string))
-            # else:
-            #     identity_coeff += coefficient.real
+            if not is_identity:
+                coeffs.append(coefficient.real)
+                p_string = "".join(results)
+                paulis.append(PauliObservable(p_string))
+            else:
+                identity_coeff += coefficient.real
     return coeffs, paulis, identity_coeff
 
 
@@ -56,11 +56,10 @@ def generate_molecule(atom1type, atom2type, bond_length, basis_set, active_orbit
 
 class MolecularHamiltonian(Hamiltonian):
     def __init__(self, nqubit, basis, pubchem_name, bravyi_kitaev=True):
-        self.identity_coeff = 0
         self.bravyi_kitaev = bravyi_kitaev
         hamiltonian = self._get_molecule_hamiltonian(basis, pubchem_name)
         coeffs, paulis, identity_coeff = parse(hamiltonian, nqubit)
-        self.identity_coeff = identity_coeff
+        self.identity = identity_coeff
         logging.log(logging.INFO, f"# of terms is {len(coeffs)}")
         super().__init__(coeffs, paulis, nqubit)
 
@@ -100,9 +99,9 @@ class DiatomicMolecularHamiltonian(Hamiltonian):
             molecule.transformation = transformation
             hamiltonian = [molecule.make_hamiltonian().qubit_operator]
         coeffs, paulis, identity_coeff = parse(hamiltonian, nqubit)
-        self.identity_coeff = identity_coeff
         logging.log(logging.INFO, f"# of terms is {len(coeffs)}")
         super().__init__(coeffs, paulis, nqubit)
+        self._identity = identity_coeff
 
     def _get_molecule_hamiltonian(self, basis, atom1_type, atom2_type, diatomic_bond_length):
         geometry = [(atom1_type, (0., 0., 0.)), (atom2_type, (0., 0., diatomic_bond_length))]
