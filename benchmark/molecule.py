@@ -1,4 +1,6 @@
 import logging
+
+from qwrapper.circuit import QWrapper
 from qwrapper.hamiltonian import Hamiltonian
 from qwrapper.obs import PauliObservable
 from openfermion import FermionOperator
@@ -6,7 +8,6 @@ from openfermion.chem import MolecularData, geometry_from_pubchem
 from openfermion.transforms import get_fermion_operator, bravyi_kitaev, jordan_wigner
 from openfermionpyscf import run_pyscf
 import tequila as tq
-from tequila.quantumchemistry.encodings import known_encodings
 
 
 def parse(operator: FermionOperator, nqubit):
@@ -26,20 +27,20 @@ def parse(operator: FermionOperator, nqubit):
                 if index > nqubit - 1:
                     raise AttributeError("nqubit is not correct.")
             results = []
-            is_identity = False
-            if len(dict) == 0:
-                is_identity = True
+            # is_identity = False
+            # if len(dict) == 0:
+            #     is_identity = True
             for q_index in range(nqubit):
                 if q_index in dict:
                     results.append(dict[q_index])
                     continue
                 results.append("I")
-            if not is_identity:
-                coeffs.append(coefficient.real)
-                p_string = "".join(results)
-                paulis.append(PauliObservable(p_string))
-            else:
-                identity_coeff += coefficient.real
+            # if not is_identity:
+            coeffs.append(coefficient.real)
+            p_string = "".join(results)
+            paulis.append(PauliObservable(p_string))
+            # else:
+            #     identity_coeff += coefficient.real
     return coeffs, paulis, identity_coeff
 
 
@@ -83,7 +84,6 @@ class MolecularHamiltonian(Hamiltonian):
 
 class DiatomicMolecularHamiltonian(Hamiltonian):
     def __init__(self, nqubit, molecule: tq.quantumchemistry.Molecule = None, bravyi_kitaev=True, **kwargs):
-        self.identity_coeff = 0
         self.bravyi_kitaev = bravyi_kitaev
 
         if molecule is None:
