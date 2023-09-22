@@ -9,20 +9,21 @@ from openfermion.transforms import get_fermion_operator, bravyi_kitaev, jordan_w
 from openfermionpyscf import run_pyscf
 import tequila as tq
 
+logger = logging.getLogger('benchmark.molecule')
+
 
 def parse(operator: FermionOperator, nqubit):
     coeffs = []
     paulis = []
     identity_coeff = 0
-    print("Starting to parse FermionOperator using " + str(nqubit) + " qubits...")
-    print("")
+    logger.info("Starting to parse FermionOperator using " + str(nqubit) + " qubits...")
     for t in operator:
-        print("Operator t: ", t)
+        logger.info("Operator t: ", t)
         for term, coefficient in t.terms.items():
-            print("Term, coeff: ", term, coefficient)
+            logger.info("Term, coeff: ", term, coefficient)
             dict = {}
             for index, p_char in term:
-                print("Index, p_char: ", index, p_char)
+                logger.info("Index, p_char: ", index, p_char)
                 dict[index] = p_char
                 if index > nqubit - 1:
                     raise AttributeError("nqubit is not correct.")
