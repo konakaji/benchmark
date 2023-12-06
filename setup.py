@@ -19,11 +19,10 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        "qwrapper @ git+ssh://git@github.com/konakaji/qwrapper.git",
         "tequila-basic==1.8.9",
+        "pyscf==2.1.0",
         "openfermion>=1.5.1",
-        "openfermionpyscf>=0.5",
-        "pyscf==2.0.1"
+        "openfermionpyscf>=0.5"
     ],
     python_requires='>=3.6',
 )
